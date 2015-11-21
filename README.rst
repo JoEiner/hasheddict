@@ -30,21 +30,20 @@ HashedDict is instantiated. This is done by providing two arguments to the
 HashedDict constructor in front of the arguments supported by Python dict:
 
 - If exactly one argument is provided, this argument is the hash algorithm used
-by HashedDict. It has to be a hash algorithm from python hashlib or a class
-that provides the same constructor, an ``update()`` method to add content to the
-hash-function and a ``digest()`` method that returns unicode-string of the hash of
-the input.
+  by HashedDict. It has to be a hash algorithm from python hashlib or a class
+  that provides the same constructor, an ``update()`` method to add content to the
+  hash-function and a ``digest()`` method that returns unicode-string of the hash of
+  the input.
 
 - If two arguments are provided the first argument influences performance.
-Its default value is 3, if it is increased, the memory usage of HashedDict will
-rise and the performance of adding and removing elements from the dictionary
-will decrease. However, a higher number reduces the relative number of additions
-where adding takes the worst-case time. In general, increasing this number is
-recommended for scenarios where dicts repeatedly shrink and grow by more than
-2^log2(n) elements (n is the dict size). Reducing it is recommended if only the
-total add/remove performance is interesting, not the worst-case performance and
-where memory is scarce.
-
+  Its default value is 3, if it is increased, the memory usage of HashedDict will
+  rise and the performance of adding and removing elements from the dictionary
+  will decrease. However, a higher number reduces the relative number of additions
+  where adding takes the worst-case time. In general, increasing this number is
+  recommended for scenarios where dicts repeatedly shrink and grow by more than
+  2^log2(n) elements (n is the dict size). Reducing it is recommended if only the
+  total add/remove performance is interesting, not the worst-case performance and
+  where memory is scarce.
 
 Example
 -------
