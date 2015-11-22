@@ -47,19 +47,24 @@ HashedDict constructor in front of the arguments supported by Python dict:
 
 Example
 -------
-
 >>> import hashlib
 >>> hashed_dict1 = HashedDict(key1="value1", key2="value2")
->>> hashed_dict2 = HashedDict(hashlib.sha512, key1="value1", key2="value2")
->>> hashed_dict3 = HashedDict()
->>> hashed_dict3[key1] = "value1"
->>> hashed_dict3[key2] = "value2"
+>>> hashed_dict2 = HashedDict(key2="value2", key1="value1")
+>>> hashed_dict3 = HashedDict(hashlib.sha512, key1="value1", key2="value2")
 >>> hashed_dict1.get_hash() == hashed_dict2.get_hash()
-False
->>> hashed_dict1.get_hash() == hashed_dict3.get_hash()
 True
->>> hashed_dict4 = HashedDict(hashlib.sha512, key1="value1", key2="value2")
->>> hashed_dict5 = HashedDict(1, hashlib.sha512, key1="value1")
+>>> hashed_dict1.get_hash() == hashed_dict3.get_hash()
+False
+>>> hashed_dict4 = HashedDict()
+>>> hashed_dict4[key1] = "value1"
+>>> hashed_dict4[key2] = "value2"
+>>> hashed_dict1.get_hash() == hashed_dict4.get_hash()
+True
+>>> hashed_dict5 = HashedDict(1, hashlib.sha512, key1="value1", key2="value2")
+>>> hashed_dict5.get_hash() == hashed_dict3.get_hash()
+True
+>>> hashed_dict = HashedDict(pangram="The quick brown fox jumps over the lazy dog")
+'/\xd4\xe1\xc6z-(\xfc\xed\x84\x9e\xe1\xbbv\xe79\x1b\x93\xeb\x12'
 
 
 Performance
