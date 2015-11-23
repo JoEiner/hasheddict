@@ -219,28 +219,30 @@ class HashTree:
     def __rehash_parent(self, row_nr, element_pos):
             lchild_pos = element_pos & ((1 << (row_nr - 1)) - 1)
             rchild_pos = element_pos | (1 << (row_nr - 1))
-            parent_pos = lchild_pos
+            #parent_pos = lchild_pos
 
             children_row = self.__tree[row_nr]
             parent_row = self.__tree[row_nr-1]
 
-            lchild_hash = children_row[lchild_pos]
-            rchild_hash = children_row[rchild_pos]
+            #lchild_hash = children_row[lchild_pos]
+            #rchild_hash = children_row[rchild_pos]
+            #parent_row[parent_pos] = self.__hashalg(lchild_hash + \
+            #                                        rchild_hash).digest()
 
-            hashalg = self.__hashalg()
+            parent_row[lchild_pos] = self.__hashalg(children_row[lchild_pos] + \
+                                                    children_row[rchild_pos]).digest()
 
-            if lchild_hash is not None:
-                hashalg.update(lchild_hash)
-            if rchild_hash is not None:
-                hashalg.update(rchild_hash)
-
-            parent_row[parent_pos] = hashalg.digest()
-
-            return parent_pos
 
 if __name__ == '__main__':
+    pangram = HashedDict(pangram="The quick brown fox jumps over the lazy dog")
+    assert pangram.get_hash() == '\xe9|\xdcJ=\xda\x84\xbd\xa6\x8e\xea\x9c=\x16\x93' + \
+                                 'x\xb2\xff9\x83S!\xfbE\xbc\x0c\x83\xb8`H\x94\xa6'
+
+
     hd1 = HashedDict()
     empty_hash = hd1.get_hash()
+    assert empty_hash == "\xe3\xb0\xc4B\x98\xfc\x1c\x14\x9a\xfb\xf4\xc8\x99" + \
+                         "o\xb9$'\xaeA\xe4d\x9b\x93L\xa4\x95\x99\x1bxR\xb8U"
     hd1["key1"] = "value1"
     new_hash = hd1.get_hash()
     del hd1["key1"]
@@ -257,11 +259,11 @@ if __name__ == '__main__':
     assert hd3.get_hash() == empty_hash
 
     hashList = []
-    for i in xrange(3):
+    for i in xrange(1000):
         hashList.append(hd3.get_hash())
         hd3[str(i)] = i
 
-    for i in xrange(2, -1, -1):
+    for i in xrange(999, -1, -1):
         del hd3[str(i)]
         assert hashList[i] == hd3.get_hash()
 
