@@ -166,7 +166,7 @@ class HashTree:
     def __build_tree(self):
         tree = []
 
-        for i in range(self.__tree_depth+1):
+        for i in xrange(self.__tree_depth+1):
             current_row = [None for j in xrange(1 << i)]
             tree.append(current_row)
 
@@ -174,7 +174,7 @@ class HashTree:
 
     def __build_leaf_items(self):
         leaf_count = 1 << self.__tree_depth
-        new_leaf_items = [[] for i in range(leaf_count)]
+        new_leaf_items = [[] for i in xrange(leaf_count)]
 
         for key, hash_value in self.__key_to_hash.iteritems():
             position = (crc32(key) & 0xffffffff) % leaf_count
@@ -185,7 +185,7 @@ class HashTree:
     def __rehash_all(self):
         self.__tree[-1] = [self.__hash_leaf(leaf_items) for leaf_items in self.__leaf_hashes]
 
-        for row_nr in reversed(range(1, self.__tree_depth+1)):
+        for row_nr in xrange(self.__tree_depth,0,-1):
             row = self.__tree[row_nr]
             for current_position in xrange(0, (len(row)+1)/2):
                 self.__rehash_parent(row_nr, current_position)
@@ -194,9 +194,18 @@ class HashTree:
         leaf_items = self.__leaf_hashes[leaf_position]
         self.__tree[-1][leaf_position] = self.__hash_leaf(leaf_items)
 
-        current_position = leaf_position
-        for row_nr in reversed(range(1, self.__tree_depth+1)):
-            current_position = self.__rehash_parent(row_nr, current_position)
+        lchild_pos = leaf_position
+        for row_nr in xrange(self.__tree_depth, 0, -1):
+            #current_position = self.__rehash_parent(row_nr, current_position)
+
+            rchild_pos = lchild_pos | (1 << (row_nr - 1))
+            lchild_pos = lchild_pos & ((1 << (row_nr - 1)) - 1)
+
+            children_row = self.__tree[row_nr]
+            parent_row = self.__tree[row_nr-1]
+
+            parent_row[lchild_pos] = self.__hashalg(children_row[lchild_pos] + \
+                                                    children_row[rchild_pos]).digest()
 
     def __hash_leaf(self, leaf_items):
         leaf_items.sort()
