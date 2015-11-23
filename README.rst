@@ -64,8 +64,8 @@ True
 >>> hashed_dict5.get_hash() == hashed_dict3.get_hash()
 True
 >>> hashed_dict = HashedDict(pangram="The quick brown fox jumps over the lazy dog")
-'/\xd4\xe1\xc6z-(\xfc\xed\x84\x9e\xe1\xbbv\xe79\x1b\x93\xeb\x12'
-
+>>> hashed_dict.get_hash()
+'\xe9|\xdcJ=\xda\x84\xbd\xa6\x8e\xea\x9c=\x16\x93x\xb2\xff9\x83S!\xfbE\xbc\x0c\x83\xb8`H\x94\xa6'
 
 Performance
 ===========
