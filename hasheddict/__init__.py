@@ -5,6 +5,7 @@ from zlib import crc32
 from hashlib import sha256
 from math import log, ceil
 import collections
+import threading
 
 __all__     = ['HashedDict']
 
@@ -37,6 +38,7 @@ class HashedDict(dict):
         @param trees_cache_size: The number of internal trees the HashedDict buffers.
                                  Raising this number increases memory usage, yet reduces
                                  time consumption when the dictionary grows over its boundaries
+                                 Use only positive integers.
 
         Examples::
 
@@ -63,7 +65,12 @@ class HashedDict(dict):
 
         self.__key_to_hash = dict()
         depth = self.__get_depth_for_length(0)
-        self.__trees = {depth: HashTree(self.__key_to_hash, self.__hashalg, depth)}
+
+        initial_tree = HashTree(self.__key_to_hash, self.__hashalg, depth)
+        initial_tree.start()
+        initial_tree.join()
+
+        self.__trees = {depth: initial_tree}
 
         self.update(*dictargs, **kwargs)
 
@@ -86,14 +93,16 @@ class HashedDict(dict):
 
         self.__manage_cached_trees()
 
+
     def __delitem__(self, key):
+        self.__manage_cached_trees()
+
         for tree in self.__trees.itervalues():
             tree.delete(key, self.__key_to_hash[key])
         del self.__key_to_hash[key]
 
         super(HashedDict, self).__delitem__(key)
 
-        self.__manage_cached_trees()
 
     def update(self, *args, **kwargs):
         if args:
@@ -115,14 +124,22 @@ class HashedDict(dict):
         dict_length = len(self)
         curr_depth = self.__get_depth_for_length(dict_length)
 
-        for key in self.__trees.keys():
-            distance = abs(curr_depth - key)
-            if distance != 1 and distance != 0:
-                del self.__trees[key]
+        range_start = max(0, curr_depth - (self.__trees_cache_size/2))
+        range_end = range_start + self.__trees_cache_size
+        allowed_trees = set(xrange(range_start, range_end))
+        existing_trees = set(self.__trees.keys())
 
-        if curr_depth not in self.__trees:
-            self.__trees[curr_depth] = HashTree(self.__key_to_hash,
-                                                self.__hashalg, curr_depth)
+        deprecated_keys = existing_trees - allowed_trees
+        new_keys = allowed_trees - existing_trees
+
+        for tree_key in deprecated_keys:
+            del self.__trees[tree_key]
+
+        for tree_key in new_keys:
+            new_tree = HashTree(self.__key_to_hash,
+                                self.__hashalg, tree_key)
+            new_tree.start()
+            self.__trees[tree_key] = new_tree
 
     @staticmethod
     def __get_depth_for_length(length):
@@ -136,26 +153,34 @@ class HashedDict(dict):
                                self.__hashalg(repr(value)).digest()).digest())
 
 
-class HashTree:
+class HashTree(threading.Thread):
     def __init__(self, key_to_hash, hashalg, tree_depth):
-        self.__key_to_hash = key_to_hash
+        threading.Thread.__init__(self)
+        self.__key_to_hash = key_to_hash.copy()
         self.__tree_depth = tree_depth
         self.__hashalg = hashalg
 
+    def run(self):
         self.__tree = self.__build_tree()
         self.__leaf_hashes = self.__build_leaf_items()
         self.__rehash_all()
 
     def get_hash(self):
+        self.join()
+
         return self.__tree[0][0]
 
     def add(self, key, hash_value):
+        self.join()
+
         position = (crc32(key) & 0xffffffff) & ((1 << self.__tree_depth) - 1)
 
         self.__leaf_hashes[position].append(hash_value)
         self.__rehash(position)
 
     def delete(self, key, hash_value):
+        self.join()
+
         position = (crc32(key) & 0xffffffff) & ((1 << self.__tree_depth) - 1)
 
         while hash_value in self.__leaf_hashes[position]:
@@ -259,11 +284,11 @@ if __name__ == '__main__':
     assert hd3.get_hash() == empty_hash
 
     hashList = []
-    for i in xrange(1000):
+    for i in xrange(1026):
         hashList.append(hd3.get_hash())
         hd3[str(i)] = i
 
-    for i in xrange(999, -1, -1):
+    for i in xrange(1025, -1, -1):
         del hd3[str(i)]
         assert hashList[i] == hd3.get_hash()
 
